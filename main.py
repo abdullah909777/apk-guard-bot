@@ -29,7 +29,7 @@ client = TelegramClient('apk_guard_session', API_ID, API_HASH)
 
 # --- 3. VirusTotal Scan Function (Large File Supported) ---
 def scan_file_with_virustotal(file_path):
-    headers = {"x-api-key": VT_API_KEY}
+    headers = {"x-apikey": VT_API_KEY} # 🟢 Fixed Header
     file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
     
     try:
@@ -38,7 +38,7 @@ def scan_file_with_virustotal(file_path):
             if upload_url_res.status_code == 200:
                 upload_url = upload_url_res.json().get("data")
             else:
-                return "⚠️ VirusTotal থেকে বড় ফাইলের আপলোড লিংক পেতে সমস্যা হয়েছে।"
+                return f"⚠️ API Error (Upload Link): {upload_url_res.status_code} - {upload_url_res.text}"
         else:
             upload_url = "https://www.virustotal.com/api/v3/files"
 
@@ -50,7 +50,7 @@ def scan_file_with_virustotal(file_path):
             analysis_id = response.json().get("data", {}).get("id")
             return analysis_id
         else:
-            return None
+            return f"⚠️ API Error (Upload): {response.status_code} - {response.text}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -81,7 +81,7 @@ async def handle_incoming_file(event):
                 await asyncio.sleep(15)
                 
                 report_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
-                headers = {"x-api-key": VT_API_KEY}
+                headers = {"x-apikey": VT_API_KEY} # 🟢 Fixed Header
                 report_res = await asyncio.to_thread(requests.get, report_url, headers=headers)
                 
                 if report_res.status_code == 200:
@@ -100,7 +100,7 @@ async def handle_incoming_file(event):
                     )
                     await msg.edit(result_text)
                 else:
-                    await msg.edit("⚠️ স্ক্যান রিপোর্ট আনতে সমস্যা হয়েছে।")
+                    await msg.edit(f"⚠️ স্ক্যান রিপোর্ট আনতে সমস্যা হয়েছে: Error {report_res.status_code}")
                 break
 
 # --- 5. Main Execution ---
